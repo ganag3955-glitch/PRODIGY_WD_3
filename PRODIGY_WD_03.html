@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tic-Tac-Toe</title>
+    <style>
+         :root {
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --accent: #2b7cff;
+            --muted: #555;
+            --win-color: #28a745;
+            --lose-color: #dc3545;
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        }
+        /* page background image (change the url below) */
+        
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("https://images.unsplash.com/photo-1507838153414-b4b713384a76?auto=format&fit=crop&w=1600&q=80") center/cover no-repeat;
+            color: #111;
+            padding: 24px;
+        }
+        
+        .app {
+            width: 100%;
+            max-width: 720px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            padding: 20px;
+            backdrop-filter: blur(6px);
+        }
+        
+        header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        header h1 {
+            font-size: 1.25rem;
+            margin: 0;
+            letter-spacing: 0.2px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: var(--accent);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .btn.secondary {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        
+        .board-wrap {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        
+        .board {
+            width: 360px;
+            max-width: 60vw;
+            aspect-ratio: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            background: linear-gradient(180deg, #ffffff, #f8f9ff);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 6px 14px rgba(21, 23, 34, 0.06);
+        }
+        
+        .cell {
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            font-weight: 800;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform .08s ease, box-shadow .08s ease;
+            box-shadow: 0 3px 8px rgba(18, 20, 30, 0.04);
+        }
+        
+        .cell:active {
+            transform: scale(0.98);
+        }
+        
+        .cell.disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+        
+        .sidebar {
+            flex: 1;
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #fff, #fbfdff);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        .score {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+        }
+        
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .option {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        
+        .small {
+            font-size: 0.92rem;
+            color: var(--muted);
+        }
+        
+        .highlight {
+            color: var(--accent);
+            font-weight: 700;
+        }
+        
+        footer {
+            margin-top: 14px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* winning highlight */
+        
+        .cell.win {
+            background: linear-gradient(90deg, rgba(40, 167, 69, 0.12), rgba(40, 167, 69, 0.06));
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.08);
+        }
+        
+        @media (max-width:760px) {
+            .board-wrap {
+                flex-direction: column;
+                gap: 14px;
+                align-items: center;
+            }
+            .sidebar {
+                width: 100%;
+                max-width: 420px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app" role="application" aria-label="Tic Tac Toe">
+        <header>
+            <h1>Tic-Tac-Toe</h1>
+            <div class="controls">
+                <button id="restart" class="btn secondary">Restart Match</button>
+                <button id="resetAll" class="btn">Reset Scores</button>
+            </div>
+        </header>
+
+        <div class="board-wrap">
+            <div class="board" id="board" aria-label="Game board">
+                <!-- 9 cells rendered by JS -->
+            </div>
+
+            <aside class="sidebar">
+                <div class="status">
+                    <div class="row">
+                        <div class="score">
+                            <div>Player X: <span id="scoreX">0</span></div>
+                            <div>Draws: <span id="scoreD">0</span></div>
+                            <div>Player O: <span id="scoreO">0</span></div>
+                        </div>
+                    </div>
+
+                    <div style="height:8px"></div>
+
+                    <div class="row" style="justify-content:space-between;">
+                        <div>
+                            <div class="small">Turn</div>
+                            <div id="turn" class="highlight">X</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div class="small">Game status</div>
+                            <div id="message" class="small">In progress</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="option">
+                    <label>
+            <input type="checkbox" id="singlePlayer" />
+            Play vs AI (X starts)
+          </label>
+                </div>
+
+                <div class="option">
+                    <label>
+            <input type="checkbox" id="aiPlaysX" />
+            AI plays as X (uncheck → AI plays O)
+          </label>
+                </div>
+
+                <div class="small">
+                    Tip: Turn on "Play vs AI" then choose if AI plays X. The AI uses perfect play.
+                </div>
+
+                <footer>
+                    <div class="small">Background image from Unsplash</div>
+                    <div class="small">Made with HTML/CSS/JS</div>
+                </footer>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        /***********************
+         * Tic-Tac-Toe logic
+         ***********************/
+        const boardEl = document.getElementById('board');
+        const turnEl = document.getElementById('turn');
+        const messageEl = document.getElementById('message');
+        const scoreXEl = document.getElementById('scoreX');
+        const scoreOEl = document.getElementById('scoreO');
+        const scoreDEl = document.getElementById('scoreD');
+        const restartBtn = document.getElementById('restart');
+        const resetAllBtn = document.getElementById('resetAll');
+        const singlePlayerChk = document.getElementById('singlePlayer');
+        const aiPlaysXChk = document.getElementById('aiPlaysX');
+
+        let board = Array(9).fill(null); // null | 'X' | 'O'
+        let current = 'X';
+        let scores = {
+            X: 0,
+            O: 0,
+            D: 0
+        };
+        let gameOver = false;
+
+        const winningLines = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        // create cells
+        function renderBoard() {
+            boardEl.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const c = document.createElement('div');
+                c.className = 'cell';
+                c.dataset.index = i;
+                c.setAttribute('role', 'button');
+                c.setAttribute('aria-label', 'cell ' + (i + 1));
+                c.innerText = board[i] || '';
+                if (board[i]) c.classList.add('disabled');
+                c.addEventListener('click', onCellClick);
+                boardEl.appendChild(c);
+            }
+        }
+
+        function onCellClick(e) {
+            const idx = +e.currentTarget.dataset.index;
+            if (gameOver) return;
+            if (board[idx]) return;
+            // If single player and AI is to move, prevent human when it's not their turn
+            if (singlePlayerChk.checked) {
+                const aiPlaysX = aiPlaysXChk.checked;
+                const humanIsX = !singlePlayerChk.checked ? null : (aiPlaysX ? false : true);
+                // simpler: only allow click when current isn't AI
+                if (aiPlaysX && current === 'X') return;
+                if (!aiPlaysX && current === 'O') return;
+            }
+
+            makeMove(idx, current);
+        }
+
+        function makeMove(idx, player) {
+            if (board[idx] || gameOver) return;
+            board[idx] = player;
+            current = player === 'X' ? 'O' : 'X';
+            updateUI();
+            const result = checkWinner(board);
+            if (result) {
+                handleResult(result);
+            } else {
+                // If single player and now AI's turn, let AI play
+                if (singlePlayerChk.checked) {
+                    const aiPlaysX = aiPlaysXChk.checked;
+                    const aiTurn = (aiPlaysX && current === 'X') || (!aiPlaysX && current === 'O');
+                    if (aiTurn) {
+                        // small delay to look natural
+                        setTimeout(() => {
+                            aiMove();
+                        }, 220);
+                    }
+                }
+            }
+        }
+
+        function updateUI() {
+            renderBoard();
+            turnEl.innerText = current;
+            messageEl.innerText = gameOver ? 'Game over' : 'In progress';
+        }
+
+        function handleResult(result) {
+            gameOver = true;
+            // highlight winning line
+            if (result.winner) {
+                const cells = document.querySelectorAll('.cell');
+                result.line.forEach(i => cells[i].classList.add('win'));
+                messageEl.innerText = `Winner: ${result.winner}`;
+                scores[result.winner] += 1;
+            } else {
+                messageEl.innerText = 'Draw';
+                scores.D += 1;
+            }
+            scoreXEl.innerText = scores.X;
+            scoreOEl.innerText = scores.O;
+            scoreDEl.innerText = scores.D;
+        }
+
+        function checkWinner(b) {
+            // returns { winner: 'X'/'O'/null, line: [i,i,i] } or null if not finished
+            for (const line of winningLines) {
+                const [a, b1, c] = line;
+                if (board[a] && board[a] === board[b1] && board[a] === board[c]) {
+                    return {
+                        winner: board[a],
+                        line
+                    };
+                }
+            }
+            if (b.every(Boolean)) return {
+                winner: null,
+                line: []
+            }; // draw
+            return null; // game continues
+        }
+
+        // --- AI (minimax for perfect play) ---
+        function aiMove() {
+            // choose best move depending on current board
+            const aiPlaysX = aiPlaysXChk.checked;
+            const aiMark = aiPlaysX ? 'X' : 'O';
+            const spot = findBestMove(board.slice(), aiMark);
+            if (spot !== null && spot !== undefined) {
+                makeMove(spot, aiMark);
+            }
+        }
+
+        function findBestMove(b, player) {
+            // if board empty and AI first, choose a corner for variance
+            if (b.every(v => v === null) && player === 'X') {
+                return 0; // one corner
+            }
+            let bestScore = -Infinity;
+            let move = null;
+            for (let i = 0; i < 9; i++) {
+                if (!b[i]) {
+                    b[i] = player;
+                    const score = minimax(b, false, player, getOpponent(player));
+                    b[i] = null;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        move = i;
+                    }
+                }
+            }
+            return move;
+        }
+
+        function getOpponent(p) {
+            return p === 'X' ? 'O' : 'X';
+        }
+
+        function evaluate(b, aiMark) {
+            // +1 if ai wins, -1 if opponent wins, 0 otherwise
+            for (const line of winningLines) {
+                const [a, c, d] = line;
+                if (b[a] && b[a] === b[c] && b[a] === b[d]) {
+                    return b[a] === aiMark ? 1 : -1;
+                }
+            }
+            return 0;
+        }
+
+        function minimax(b, isMaximizing, aiMark, currentPlayer) {
+            const res = checkWinner(b);
+            if (res) {
+                if (res.winner === aiMark) return 1;
+                if (res.winner === null) return 0;
+                return -1;
+            }
+
+            if (isMaximizing) {
+                let best = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (!b[i]) {
+                        b[i] = currentPlayer;
+                        const val = minimax(b, false, aiMark, getOpponent(currentPlayer));
+                        b[i] = null;
+                        best = Math.max(best, val);
+                    }
+                }
+                return best;
+            } else {
+                let best = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (!b[i]) {
+                        b[i] = currentPlayer;
+                        const val = minimax(b, true, aiMark, getOpponent(currentPlayer));
+                        b[i] = null;
+                        best = Math.min(best, val);
+                    }
+                }
+                return best;
+            }
+        }
+
+        // Event handlers
+        restartBtn.addEventListener('click', () => {
+            board = Array(9).fill(null);
+            current = 'X';
+            gameOver = false;
+            updateUI();
+            // If single player and AI plays X and AI starts, trigger AI move
+            if (singlePlayerChk.checked && aiPlaysXChk.checked) setTimeout(aiMove, 120);
+        });
+
+        resetAllBtn.addEventListener('click', () => {
+            scores = {
+                X: 0,
+                O: 0,
+                D: 0
+            };
+            scoreXEl.innerText = 0;
+            scoreOEl.innerText = 0;
+            scoreDEl.innerText = 0;
+            restartBtn.click();
+        });
+
+        singlePlayerChk.addEventListener('change', () => {
+            // reset board when toggling modes to avoid confusing states
+            restartBtn.click();
+        });
+
+        aiPlaysXChk.addEventListener('change', () => {
+            restartBtn.click();
+        });
+
+        // initialize
+        renderBoard();
+
+        // If single player enabled by default, let AI move when appropriate
+        if (singlePlayerChk.checked && aiPlaysXChk.checked) setTimeout(aiMove, 120);
+
+        // Accessibility: keyboard play (optional)
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            // allow numeric keypad 1-9 to play in order or arrow+enter? keep simple:
+            if (e.key >= '1' && e.key <= '9') {
+                const idx = parseInt(e.key) - 1;
+                // only allow when human's turn in single player
+                if (singlePlayerChk.checked) {
+                    const aiPlaysX = aiPlaysXChk.checked;
+                    const aiTurn = (aiPlaysX && current === 'X') || (!aiPlaysX && current === 'O');
+                    if (aiTurn) return;
+                }
+                makeMove(idx, current);
+            }
+        });
+    </script>
+</body>
+
+</html>
